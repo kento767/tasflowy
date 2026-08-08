@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/classical-5c8cebf0-1787-4629-8bd8-e7bef56ac0d7/styles.css">
+  <script src="_ds/classical-5c8cebf0-1787-4629-8bd8-e7bef56ac0d7/_ds_bundle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&amp;display=swap">
+  <style>
+    :root { --color-bg:#ffffff; --color-surface:#f7f9f9; --color-text:#0f1419; --color-divider:#eff3f4; --color-neutral-100:#f7f9f9; --color-neutral-200:#eff3f4; --color-neutral-300:#e1e8ed; --color-neutral-400:#cfd9de; --color-neutral-500:#8b98a5; --color-neutral-600:#536471; --color-neutral-700:#425364; --color-neutral-800:#273340; --color-neutral-900:#0f1419; --color-accent:#1d9bf0; --color-accent-100:#e8f5fe; --color-accent-600:#1a8cd8; --color-accent-700:#536471; --color-accent-800:#536471; --font-heading:'M PLUS Rounded 1c',sans-serif; --font-body:'M PLUS Rounded 1c',sans-serif; --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --shadow-sm:0 2px 6px rgba(58,47,42,.08); --shadow-md:0 4px 14px rgba(58,47,42,.1); --shadow-lg:0 14px 36px rgba(58,47,42,.16); }
+    body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+    a { color: var(--color-accent-700); } a:hover { color: var(--color-accent); }
+  </style>
+</helmet>
+<div style="height: 100vh; overflow: hidden; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--color-divider)">
+    <div style="font-family: var(--font-heading); font-weight: 600; font-size: 26px">TaskFlowy</div>
+    <div style="display: flex; gap: 22px; align-items: baseline">
+      <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 16px; font-size: 12px; color: var(--color-neutral-600)">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border: 1.5px solid var(--color-accent); background: #ffffff; display: inline-block"></span>進行中</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border: 1px solid var(--color-neutral-400); background: #ffffff; display: inline-block"></span>着手できる</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border: 1px solid var(--color-neutral-300); background: var(--color-surface); display: inline-block"></span>完了</span>
+      </div></sc-if>
+      <div style="font-size: 13px; color: var(--color-neutral-600)">8月3日（月）</div>
+    </div>
+  </div>
+  <div style="flex: 1; min-height: 0; display: flex; align-items: stretch">
+
+    <!-- 根タスク一覧（期限順） -->
+    <div style="width: 264px; flex: none; border-right: 1px solid var(--color-divider); padding: 24px 22px; box-sizing: border-box; overflow: auto; background: var(--color-neutral-100)">
+      <div style="font-size: 12px; letter-spacing: 3px; color: var(--color-neutral-600); margin-bottom: 12px">根タスク ─ 期限順</div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{ rootList }}" as="r" hint-placeholder-count="3">
+          <div onClick="{{ r.onGo }}" style="height: 68px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid var(--color-neutral-400); border-radius: var(--radius-lg); background: #ffffff; box-shadow: 0 1px 3px rgba(15,20,25,.14); cursor: pointer" style-hover="background: var(--color-neutral-100)">
+            <div style="font-size: 15px; font-weight: 700; color: var(--color-neutral-900); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ r.title }}</div>
+            <div style="display: flex; gap: 6px; align-items: center">
+              <sc-if value="{{ r.isActive }}" hint-placeholder-val="{{ false }}"><span style="{{ r.statusStyle }}">進行中</span></sc-if>
+              <sc-if value="{{ r.hasPill }}" hint-placeholder-val="{{ true }}"><span style="{{ r.pillStyle }}">{{ r.pillText }}</span></sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 12px 2px; cursor: pointer; color: var(--color-accent-700); font-size: 13px" style-hover="color: var(--color-accent)"><span style="font-size: 15px; line-height: 1">＋</span> 根タスクを追加</div>
+      <div style="font-size: 12px; color: var(--color-neutral-600); line-height: 1.7; margin-top: 8px">期限の近い順に並びます。ノードの「＋」から子タスクを追加できます。</div>
+    </div>
+
+    <!-- ツリーキャンバス -->
+    <div ref="{{ attachCanvas }}" style="{{ canvasStyle }}">
+      <div style="position: sticky; top: 0; left: 0; z-index: 10; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 8px">
+        <div onClick="{{ toggleFull }}" style="display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--color-neutral-400); border-radius: var(--radius-md); background: var(--color-bg); padding: 4px 12px; font-size: 12px; color: var(--color-neutral-700); cursor: pointer; user-select: none" style-hover="background: var(--color-accent-100)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ fullIcon }}"></path></svg>
+          {{ fullLabel }}
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--color-neutral-400); border-radius: var(--radius-md); background: var(--color-bg)">
+          <span onClick="{{ zoomOut }}" style="cursor: pointer; padding: 4px 12px; font-size: 15px; line-height: 1; user-select: none; border-right: 1px solid var(--color-divider)" style-hover="background: var(--color-accent-100)">−</span>
+          <span onClick="{{ zoomReset }}" style="cursor: pointer; padding: 4px 10px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--color-neutral-600); user-select: none; min-width: 38px; text-align: center" style-hover="background: var(--color-accent-100)">{{ zoomLabel }}</span>
+          <span onClick="{{ zoomIn }}" style="cursor: pointer; padding: 4px 12px; font-size: 15px; line-height: 1; user-select: none; border-left: 1px solid var(--color-divider)" style-hover="background: var(--color-accent-100)">+</span>
+        </div>
+      </div>
+      <div style="{{ zoomStyle }}">
+        <sc-for list="{{ trees }}" as="t" hint-placeholder-count="3">
+          <div id="{{ t.anchorId }}" style="border-bottom: 1px solid var(--color-divider); padding-bottom: 24px; margin-bottom: 24px">
+            <div style="display: flex; align-items: baseline; gap: 16px">
+              <span style="font-size: 12px; letter-spacing: 3px; color: var(--color-neutral-600)">{{ t.label }}</span>
+              <span onClick="{{ t.onAddRoot }}" style="font-size: 12px; color: var(--color-accent-700); cursor: pointer" style-hover="color: var(--color-accent)">＋ タスク追加</span>
+            </div>
+            <div style="{{ t.wrapStyle }}">
+              <svg width="{{ t.width }}" height="{{ t.height }}" style="position: absolute; inset: 0; pointer-events: none">
+                <sc-for list="{{ t.paths }}" as="p" hint-placeholder-count="2">
+                  <path d="{{ p.d }}" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5"></path>
+                </sc-for>
+              </svg>
+              <sc-for list="{{ t.nodes }}" as="n" hint-placeholder-count="4">
+                <div draggable="{{ n.canDrag }}" onDragStart="{{ n.onDrag }}" style="{{ n.boxStyle }}">
+                  <div style="{{ n.titleStyle }}">{{ n.title }}<sc-if value="{{ n.isDone }}" hint-placeholder-val="{{ false }}"><span style="color: var(--color-accent-700)"> ✓</span></sc-if></div>
+                  <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px"><sc-if value="{{ n.isActive }}" hint-placeholder-val="{{ false }}"><span style="{{ n.statusStyle }}">進行中</span></sc-if><sc-if value="{{ n.isNext }}" hint-placeholder-val="{{ false }}"><span style="font-size: 10.5px; font-weight: 500; color: var(--color-neutral-600); background: #ffffff; border: 1px solid var(--color-neutral-400); border-radius: 999px; padding: 0 7px; line-height: 15px; white-space: nowrap">次にやる</span></sc-if><sc-if value="{{ n.hasMeta }}" hint-placeholder-val="{{ true }}"><span style="{{ n.metaStyle }}">{{ n.meta }}</span></sc-if></div>
+                  <sc-if value="{{ n.hasKids }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ n.onToggle }}" style="position: absolute; right: -13px; top: 6px; width: 26px; height: 26px; border-radius: 50%; background: var(--color-neutral-800); color: var(--color-bg); font-size: 14px; line-height: 26px; text-align: center; cursor: pointer; user-select: none">{{ n.glyph }}</div>
+                  </sc-if>
+                  <div onClick="{{ n.onAdd }}" title="子タスクを追加" style="{{ n.addStyle }}" style-hover="background: var(--color-accent-100)">＋</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- やることリスト -->
+    <div style="width: 336px; flex: none; border-left: 1px solid var(--color-divider); padding: 24px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px; overflow: auto; background: var(--color-neutral-100)">
+      <div onDragOver="{{ allowDrop }}" onDrop="{{ dropToday }}">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px">
+          <span style="font-size: 12px; letter-spacing: 3px; color: var(--color-accent-700)">今日やる</span>
+          <span style="font-size: 12px; color: var(--color-neutral-600)">8/3</span>
+        </div>
+        <div style="border: 1px dashed var(--color-neutral-400); border-radius: var(--radius-md); padding: 10px 14px; min-height: 96px; box-sizing: border-box">
+          <sc-for list="{{ todayItems }}" as="item" hint-placeholder-count="1">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin-bottom: 10px; background: #ffffff; border: 1px solid var(--color-neutral-400); border-radius: var(--radius-lg); box-shadow: 0 1px 3px rgba(15,20,25,.14)">
+              <span style="width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--color-neutral-400); margin-top: 3px; flex: none"></span>
+              <span style="flex: 1; min-width: 0">
+                <span style="display: block; font-size: 15px; font-weight: 700; color: var(--color-neutral-900); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.title }}</span>
+                <span style="display: flex; gap: 6px; align-items: center; margin-top: 5px">
+                  <span style="font-size: 11.5px; color: var(--color-neutral-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.path }}</span>
+                  <sc-if value="{{ item.hasPill }}" hint-placeholder-val="{{ true }}"><span style="{{ item.pillStyle }}">{{ item.pillText }}</span></sc-if>
+                </span>
+              </span>
+              <span onClick="{{ item.remove }}" style="cursor: pointer; color: var(--color-neutral-500); font-size: 13px; padding: 0 2px" style-hover="color: var(--color-accent-700)">×</span>
+            </div>
+          </sc-for>
+          <div style="font-size: 12px; color: var(--color-neutral-500); padding: 10px 0; text-align: center">ツリーからここへドラッグでコピー</div>
+        </div>
+      </div>
+      <div onDragOver="{{ allowDrop }}" onDrop="{{ dropLater }}">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px">
+          <span style="font-size: 12px; letter-spacing: 3px; color: var(--color-neutral-700)">明日以降やる</span>
+        </div>
+        <div style="border: 1px dashed var(--color-neutral-400); border-radius: var(--radius-md); padding: 10px 14px; min-height: 96px; box-sizing: border-box">
+          <sc-for list="{{ laterItems }}" as="item" hint-placeholder-count="1">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin-bottom: 10px; background: #ffffff; border: 1px solid var(--color-neutral-400); border-radius: var(--radius-lg); box-shadow: 0 1px 3px rgba(15,20,25,.14)">
+              <span style="width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--color-neutral-400); margin-top: 3px; flex: none"></span>
+              <span style="flex: 1; min-width: 0">
+                <span style="display: block; font-size: 15px; font-weight: 700; color: var(--color-neutral-900); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.title }}</span>
+                <span style="display: flex; gap: 6px; align-items: center; margin-top: 5px">
+                  <span style="font-size: 11.5px; color: var(--color-neutral-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.path }}</span>
+                  <sc-if value="{{ item.hasPill }}" hint-placeholder-val="{{ true }}"><span style="{{ item.pillStyle }}">{{ item.pillText }}</span></sc-if>
+                </span>
+              </span>
+              <span onClick="{{ item.remove }}" style="cursor: pointer; color: var(--color-neutral-500); font-size: 13px; padding: 0 2px" style-hover="color: var(--color-accent-700)">×</span>
+            </div>
+          </sc-for>
+          <div style="font-size: 12px; color: var(--color-neutral-500); padding: 10px 0; text-align: center">ツリーからここへドラッグでコピー</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 子タスク追加ダイアログ -->
+  <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAdd }}" style="position: fixed; inset: 0; z-index: 100; background: color-mix(in srgb, #201f1d 32%, transparent); display: flex; align-items: center; justify-content: center">
+      <div onClick="{{ stopClick }}" style="width: 420px; background: var(--color-bg); border: 1px solid var(--color-neutral-400); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 26px 28px; box-sizing: border-box">
+        <div style="font-family: var(--font-heading); font-weight: 600; font-size: 20px">子タスクを追加</div>
+        <div style="font-size: 12px; color: var(--color-neutral-600); margin-top: 4px; padding-bottom: 14px; border-bottom: 1px solid var(--color-divider)">「{{ addParentTitle }}」の下に追加します</div>
+        <div style="margin-top: 16px">
+          <div style="font-size: 12px; letter-spacing: 2px; color: var(--color-neutral-600); margin-bottom: 6px">タスク名</div>
+          <input class="input" value="{{ formTitle }}" onChange="{{ setFormTitle }}" placeholder="例：食器の梱包" style="width: 100%; box-sizing: border-box">
+        </div>
+        <div style="margin-top: 14px">
+          <div style="font-size: 12px; letter-spacing: 2px; color: var(--color-neutral-600); margin-bottom: 6px">期限（任意）</div>
+          <input class="input" value="{{ formDue }}" onChange="{{ setFormDue }}" placeholder="例：8/15" style="width: 100%; box-sizing: border-box">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px">
+          <button class="btn btn-ghost" onClick="{{ closeAdd }}">キャンセル</button>
+          <button class="btn btn-primary" onClick="{{ submitAdd }}">追加</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showLegend&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;表示&quot;}}">
+const COL = 306, W = 250, H = 70, ROW = 92;
+const seedTrees = [
+  { id: 't1', root: { id: 'hikkoshi', title: '引っ越し準備', due: '8/31', status: 'active', children: [
+    { id: 'bukken', title: '物件を決める', status: 'done', done: '7/28', children: [
+      { id: 'naiken', title: '内見', status: 'done', done: '7/20' },
+      { id: 'keiyaku', title: '契約', status: 'done', done: '7/28' }] },
+    { id: 'nizukuri', title: '荷造り', due: '8/20', status: 'active', children: [
+      { id: 'dambo', title: '段ボール調達', status: 'done', done: '8/1' },
+      { id: 'hon', title: '本の梱包', due: '8/10', status: 'active' },
+      { id: 'shokki', title: '食器の梱包', due: '8/14', status: 'todo', next: true, children: [
+        { id: 'kansho', title: '緩衝材を買う', due: '8/13', status: 'todo' }] }] },
+    { id: 'tetsuzuki', title: '手続き', due: '8/12', status: 'todo', urgent: true, children: [
+      { id: 'denki', title: '電気・ガス解約', due: '8/7', status: 'todo', next: true, urgent: true },
+      { id: 'tenshutsu', title: '転出届', due: '8/12', status: 'todo' }] }] } },
+  { id: 't2', root: { id: 'site', title: 'ポートフォリオ制作', due: '9/30', status: 'active', children: [
+    { id: 'jisso', title: '実装', due: '9/20', status: 'active', children: [
+      { id: 'top', title: 'トップページ', due: '9/5', status: 'active' },
+      { id: 'form', title: '問い合わせフォーム', due: '9/12', status: 'todo', next: true }] },
+    { id: 'design', title: 'デザイン案', status: 'done', done: '7/25' }] } },
+  { id: 't3', root: { id: 'haisha', title: '歯医者の予約', due: '8/8', status: 'todo', next: true, urgent: true } }
+];
+// X（旧Twitter）参考の配色 — 文字は黒/グレーのみ、青は枠線・下線などストロークにだけ使う
+const PALETTES = {
+  'X': { bg:'#ffffff', surface:'#f7f9f9', text:'#0f1419', divider:'#eff3f4',
+    n:['#f7f9f9','#eff3f4','#e1e8ed','#cfd9de','#8b98a5','#536471','#425364','#273340','#0f1419'],
+    accent:'#1d9bf0', a100:'#e8f5fe', a600:'#1a8cd8', a700:'#536471', a800:'#536471' }
+};
+class Component extends DCLogic {
+  _applyPalette() {
+    const p = PALETTES[this.props.palette] || PALETTES['X'];
+    const r = document.documentElement.style;
+    r.setProperty('--color-bg', p.bg); r.setProperty('--color-surface', p.surface);
+    r.setProperty('--color-text', p.text); r.setProperty('--color-divider', p.divider);
+    p.n.forEach((c, i) => r.setProperty('--color-neutral-' + (i + 1) + '00', c));
+    r.setProperty('--color-accent', p.accent); r.setProperty('--color-accent-100', p.a100);
+    r.setProperty('--color-accent-600', p.a600); r.setProperty('--color-accent-700', p.a700);
+    r.setProperty('--color-accent-800', p.a800);
+  }
+  componentDidUpdate() { this._applyPalette(); }
+  state = {
+    trees: seedTrees, collapsed: {}, zoom: 1,
+    today: [{ title: '本の梱包', path: '引っ越し準備 / 荷造り', due: '8/10' }],
+    later: [{ title: '転出届', path: '引っ越し準備 / 手続き', due: '8/12' }],
+    addFor: null, formTitle: '', formDue: '', full: false
+  };
+  componentDidMount() {
+    this._esc = (e) => { if (e.key === 'Escape' && this.state.full) this.setState({ full: false }); };
+    window.addEventListener('keydown', this._esc);
+    this._applyPalette();
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._esc); }
+  _dragItem = null;
+  _canvas = null;
+  attachCanvas = (el) => {
+    if (!el || el === this._canvas) return;
+    this._canvas = el;
+    el.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return; // trackpad pinch arrives as ctrl+wheel
+      e.preventDefault();
+      this.setState(s => ({ zoom: Math.min(2, Math.max(0.4, s.zoom * Math.exp(-e.deltaY * 0.012))) }));
+    }, { passive: false });
+  };
+  _setZoom(dz) {
+    this.setState(s => ({ zoom: Math.min(2, Math.max(0.4, Math.round((s.zoom + dz) * 10) / 10)) }));
+  }
+  _drop(listName) {
+    return (e) => {
+      e.preventDefault();
+      const it = this._dragItem;
+      if (!it || this.state[listName].some(x => x.title === it.title && x.path === it.path)) return;
+      this.setState(s => ({ [listName]: [...s[listName], it] }));
+    };
+  }
+  _mapItems(listName) {
+    return this.state[listName].map((it, i) => {
+      const p = it.due ? this._pillFor(it.due) : null;
+      return {
+        ...it,
+        hasPill: !!p, pillText: p ? p.text : '', pillStyle: p ? p.style : {},
+        remove: () => this.setState(s => ({ [listName]: s[listName].filter((_, j) => j !== i) }))
+      };
+    });
+  }
+  _pillBase() {
+    return { display: 'inline-block', fontSize: '10.5px', fontWeight: 700, borderRadius: '999px', padding: '1px 7px', lineHeight: '15px', whiteSpace: 'nowrap' };
+  }
+  _statusChip() {
+    return { ...this._pillBase(), background: '#e8f5fe', color: '#176ca6' };
+  }
+  _pillFor(due) {
+    const dl = this._daysLeft(due);
+    if (dl === null) return null;
+    const b = this._pillBase();
+    if (dl < 0) return { text: due + ' ・ ' + (-dl) + '日超過', style: { ...b, background: '#8f1d22', color: '#fffdf8' } };
+    if (dl === 0) return { text: '今日 ・ ' + due, style: { ...b, background: '#e5484d', color: '#fffdf8' } };
+    if (dl <= 3) return { text: due + ' ・ あと' + dl + '日', style: { ...b, background: '#e5484d', color: '#fffdf8' } };
+    return { text: due + ' ・ あと' + dl + '日', style: { ...b, background: '#f6e3bb', color: '#7a5108' } };
+  }
+  _buildTree(tree) {
+    const nodes = [], paths = [];
+    let cursor = 10, maxDepth = 0;
+    const walk = (node, depth, parentPath) => {
+      maxDepth = Math.max(maxDepth, depth);
+      const kids = node.children || [];
+      const open = !this.state.collapsed[node.id];
+      const rec = { node, depth, path: parentPath };
+      if (!kids.length || !open) {
+        rec.y = cursor; cursor += ROW;
+      } else {
+        const childPath = parentPath === 'ルート' ? node.title : parentPath + ' / ' + node.title;
+        const recs = kids.map(k => walk(k, depth + 1, childPath));
+        rec.y = (recs[0].y + recs[recs.length - 1].y) / 2;
+        const sx = 20 + depth * COL + W, sy = rec.y + H / 2;
+        recs.forEach(c => {
+          const ex = 20 + (depth + 1) * COL, ey = c.y + H / 2;
+          paths.push({ d: 'M' + sx + ',' + sy + ' C' + (sx + 36) + ',' + sy + ' ' + (ex - 36) + ',' + ey + ' ' + ex + ',' + ey });
+        });
+      }
+      nodes.push(rec);
+      return rec;
+    };
+    walk(tree.root, 0, 'ルート');
+    const height = cursor - ROW + H + 10;
+    const width = Math.max(1150, 20 + maxDepth * COL + W + 20);
+    return { nodes, paths, height, width };
+  }
+  _viewNode(rec) {
+    const n = rec.node, st = n.status;
+    const kids = n.children || [];
+    const base = {
+      position: 'absolute', left: rec.x = 20 + rec.depth * COL, top: rec.y, width: W, height: H,
+      boxSizing: 'border-box', borderRadius: 'var(--radius-lg)', padding: '12px 16px', boxShadow: '0 1px 3px rgba(15,20,25,.14)'
+    };
+    let boxStyle, meta = '', metaStyle = { fontSize: '11.5px', color: 'var(--color-neutral-500)' };
+    if (st === 'done') {
+      boxStyle = { ...base, border: '1px solid var(--color-neutral-300)', background: 'var(--color-neutral-200)', color: 'var(--color-neutral-500)', boxShadow: 'none' };
+      meta = '完了 ' + (n.done || '');
+    } else {
+      boxStyle = st === 'active'
+        ? { ...base, border: '2px solid var(--color-accent)', background: '#ffffff', padding: '9px 16px', cursor: 'grab' }
+        : { ...base, border: '1px solid var(--color-neutral-400)', background: '#ffffff', padding: '10px 16px', cursor: 'grab' };
+      const p = n.due ? this._pillFor(n.due) : null;
+      if (!p) { meta = st === 'active' ? '' : '未着手'; }
+      else { meta = p.text; metaStyle = p.style; }
+    }
+    return {
+      key: n.id, title: n.title, meta,
+      boxStyle,
+      titleStyle: { fontSize: rec.depth === 0 ? '18px' : '17px', lineHeight: 1.25, fontWeight: st === 'done' ? 500 : 700, color: st === 'done' ? 'var(--color-neutral-500)' : 'var(--color-neutral-900)', textDecoration: st === 'done' ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+      metaStyle,
+      isActive: st === 'active', hasMeta: meta !== '',
+      statusStyle: this._statusChip(),
+      isDone: st === 'done', isNext: !!n.next,
+      hasKids: kids.length > 0,
+      glyph: this.state.collapsed[n.id] ? '+' : '−',
+      onToggle: () => this.setState(s => ({ collapsed: { ...s.collapsed, [n.id]: !s.collapsed[n.id] } })),
+      onAdd: () => this.setState({ addFor: n.id, formTitle: '', formDue: '' }),
+      addStyle: {
+        position: 'absolute', right: '-13px', top: kids.length ? '36px' : '19px', width: '26px', height: '26px',
+        borderRadius: '50%', border: '1px solid var(--color-accent)', background: 'var(--color-bg)',
+        color: 'var(--color-accent-700)', fontSize: '13px', lineHeight: '24px', textAlign: 'center',
+        cursor: 'pointer', userSelect: 'none', boxSizing: 'border-box'
+      },
+      canDrag: st !== 'done',
+      onDrag: (e) => {
+        this._dragItem = { title: n.title, path: rec.path, due: n.due || '' };
+        e.dataTransfer.effectAllowed = 'copy';
+      }
+    };
+  }
+  _daysLeft(due) {
+    const m = /^(\d+)\/(\d+)$/.exec(due);
+    if (!m) return null;
+    const d = new Date(2026, +m[1] - 1, +m[2]);
+    return Math.round((d - new Date(2026, 7, 3)) / 86400000);
+  }
+  _findNode(id) {
+    let found = null;
+    const walk = (n) => { if (n.id === id) { found = n; return; } (n.children || []).forEach(walk); };
+    this.state.trees.forEach(t => walk(t.root));
+    return found;
+  }
+  renderVals() {
+    const trees = this.state.trees.map(t => {
+      const { nodes, paths, height, width } = this._buildTree(t);
+      return {
+        key: t.id,
+        anchorId: 'tree-' + t.root.id,
+        label: t.root.title + (t.root.due ? ' ─ 期限 ' + t.root.due : ''),
+        onAddRoot: () => this.setState({ addFor: t.root.id, formTitle: '', formDue: '' }),
+        wrapStyle: { position: 'relative', width: width + 'px', height: height + 'px', marginTop: '4px' },
+        width, height,
+        paths,
+        nodes: nodes.map(r => this._viewNode(r))
+      };
+    });
+    const roots = this.state.trees.map(t => t.root);
+    const parse = d => { const m = /^(\d+)\/(\d+)$/.exec(d || ''); return m ? +m[1] * 100 + +m[2] : 9999; };
+    roots.sort((a, b) => parse(a.due) - parse(b.due));
+    const addParent = this.state.addFor ? this._findNode(this.state.addFor) : null;
+    return {
+      showLegend: this.props.showLegend ?? true,
+      trees,
+      rootList: roots.map(r => {
+        const p = r.due ? this._pillFor(r.due) : null;
+        return {
+          key: r.id, title: r.title, isActive: r.status === 'active',
+          statusStyle: this._statusChip(),
+          hasPill: !!p, pillText: p ? p.text : '', pillStyle: p ? p.style : {},
+          onGo: () => {
+            const el = document.getElementById('tree-' + r.id), c = this._canvas;
+            if (el && c) c.scrollTo({ top: el.getBoundingClientRect().top - c.getBoundingClientRect().top + c.scrollTop - 12, behavior: 'smooth' });
+          }
+        };
+      }),
+      canvasStyle: this.state.full
+        ? { position: 'fixed', inset: 0, zIndex: 50, background: 'var(--color-neutral-100)', overflow: 'auto', padding: '20px 32px 28px', boxSizing: 'border-box' }
+        : { flex: 1, overflow: 'auto', padding: '20px 32px 28px', boxSizing: 'border-box', position: 'relative', background: 'var(--color-neutral-100)' },
+      toggleFull: () => this.setState(s => ({ full: !s.full })),
+      fullLabel: this.state.full ? '全画面を終了' : '全画面',
+      fullIcon: this.state.full
+        ? 'M8 3v3a2 2 0 0 1-2 2H3 M21 8h-3a2 2 0 0 1-2-2V3 M3 16h3a2 2 0 0 1 2 2v3 M16 21v-3a2 2 0 0 1 2-2h3'
+        : 'M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3',
+      zoomStyle: { zoom: this.state.zoom },
+      zoomLabel: Math.round(this.state.zoom * 100) + '%',
+      zoomIn: () => this._setZoom(0.1),
+      zoomOut: () => this._setZoom(-0.1),
+      zoomReset: () => this.setState({ zoom: 1 }),
+      attachCanvas: this.attachCanvas,
+      allowDrop: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; },
+      dropToday: this._drop('today'),
+      dropLater: this._drop('later'),
+      todayItems: this._mapItems('today'),
+      laterItems: this._mapItems('later'),
+      addOpen: !!this.state.addFor,
+      addParentTitle: addParent ? addParent.title : '',
+      formTitle: this.state.formTitle,
+      formDue: this.state.formDue,
+      setFormTitle: (e) => this.setState({ formTitle: e.target.value }),
+      setFormDue: (e) => this.setState({ formDue: e.target.value }),
+      closeAdd: () => this.setState({ addFor: null }),
+      stopClick: (e) => e.stopPropagation(),
+      submitAdd: () => {
+        const title = this.state.formTitle.trim();
+        if (!title || !this.state.addFor) return;
+        const trees = JSON.parse(JSON.stringify(this.state.trees));
+        let parent = null;
+        const walk = (n) => { if (n.id === this.state.addFor) { parent = n; return; } (n.children || []).forEach(walk); };
+        trees.forEach(t => walk(t.root));
+        if (!parent) return;
+        parent.children = parent.children || [];
+        parent.children.push({ id: 'n' + Math.random().toString(36).slice(2, 8), title, due: this.state.formDue.trim(), status: 'todo' });
+        this.setState(s => ({ trees, addFor: null, collapsed: { ...s.collapsed, [parent.id]: false } }));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

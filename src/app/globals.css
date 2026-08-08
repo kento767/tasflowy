@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* TaskFlowy デザイントークン(X風・ライト) */
+@theme {
+  --color-surface: #f7f9f9;
+  --color-divider: #eff3f4;
+  --color-n100: #f7f9f9;
+  --color-n200: #eff3f4;
+  --color-n300: #e1e8ed;
+  --color-n400: #cfd9de;
+  --color-n500: #8b98a5;
+  --color-n600: #536471;
+  --color-n700: #425364;
+  --color-n800: #273340;
+  --color-n900: #0f1419;
+  --color-accent: #1d9bf0;
+  --color-accent-100: #e8f5fe;
+  --color-accent-600: #1a8cd8;
+  /* Xパレットでは accent-700 はグレー(文字は黒/グレーのみ、青はストロークにだけ使う) */
+  --color-accent-700: #536471;
+  --color-chip-blue: #176ca6;
+  --color-overdue: #8f1d22;
+  --color-soon: #e5484d;
+  --color-badge-light: #fffdf8;
+  --color-far: #f6e3bb;
+  --color-far-text: #7a5108;
+  --shadow-card: 0 1px 3px rgba(15, 20, 25, 0.14);
+  --shadow-dialog: 0 14px 36px rgba(58, 47, 42, 0.16);
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+/* キャンバスをドラッグでパンしている間はどこでも「掴んでいる」カーソルにする */
+.tf-panning,
+.tf-panning * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* ダイアログのフォーム部品 */
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--color-n400);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-n900);
+  font-size: 14px;
+  padding: 9px 12px;
+  outline: none;
+}
+.input::placeholder {
+  color: var(--color-n500);
+}
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-100);
+}
+
+.btn {
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 9px 18px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background: var(--color-accent-600);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--color-n600);
+  border-color: var(--color-n400);
+}
+.btn-ghost:hover {
+  background: var(--color-n100);
+}
