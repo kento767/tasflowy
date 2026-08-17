@@ -286,32 +286,12 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
   useEffect(() => {
     if (!rows || !items || !today) return;
     const byNodeId = new Map(items.map((x) => [x.node_id, x]));
-    // eslint-disable-next-line no-console
-    console.log(
-      "[auto-sync] run " +
-        JSON.stringify({ rowsCount: rows.length, itemsCount: items.length, today })
-    );
 
     for (const node of rows) {
       if (node.status === "done" || !node.due_date) continue;
       if (node.dismissed_on === today) continue;
       const targetList: ListName = node.due_date <= today ? "today" : "later";
       const existing = byNodeId.get(node.id);
-      // eslint-disable-next-line no-console
-      console.log(
-        "[auto-sync] candidate " +
-          JSON.stringify({
-            title: node.title,
-            due_date: node.due_date,
-            status: node.status,
-            dismissed_on: node.dismissed_on,
-            targetList,
-            hasExisting: !!existing,
-            existingId: existing?.id,
-            existingList: existing?.list,
-            existingAuto: existing?.auto,
-          })
-      );
 
       if (!existing) {
         const temp: ListItem = {
@@ -339,39 +319,41 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
           listed_on: today,
           auto: true,
         })
-          .then((row) => {
-            // eslint-disable-next-line no-console
-            console.log("[auto-sync] createListItem success " + JSON.stringify(row));
-            setItems((s) => s?.map((x) => (x.id === temp.id ? row : x)) ?? s);
-          })
-          .catch((err) => {
-            // eslint-disable-next-line no-console
-            console.log(
-              "[auto-sync] createListItem FAILED " +
-                (err && typeof err === "object"
-                  ? JSON.stringify({
-                      message: (err as { message?: string }).message,
-                      details: (err as { details?: string }).details,
-                      hint: (err as { hint?: string }).hint,
-                      code: (err as { code?: string }).code,
-                    })
-                  : String(err))
-            );
-            setItems((s) => s?.filter((x) => x.id !== temp.id) ?? s);
-          });
+          .then((row) =>
+            setItems((s) => s?.map((x) => (x.id === temp.id ? row : x)) ?? s)
+          )
+          .catch(() => setItems((s) => s?.filter((x) => x.id !== temp.id) ?? s));
         continue;
       }
 
-      if (existing.auto && existing.list !== targetList) {
-        const patch =
-          targetList === "today" && existing.list !== "today"
-            ? { list: targetList, listed_on: today }
-            : { list: targetList };
-        setItems(
-          (s) => s?.map((x) => (x.id === existing.id ? { ...x, ...patch } : x)) ?? s
-        );
-        if (!existing.id.startsWith("temp-")) {
-          db.updateListItem(existing.id, patch).catch(() => {});
+      if (existing.auto) {
+        const path = nodePath(rows, node.id);
+        const listChanged = existing.list !== targetList;
+        const needsUpdate =
+          listChanged ||
+          existing.due_date !== node.due_date ||
+          existing.title !== node.title ||
+          existing.path !== path;
+        if (needsUpdate) {
+          const patch: Partial<
+            Pick<ListItem, "list" | "listed_on" | "due_date" | "title" | "path">
+          > = {
+            due_date: node.due_date,
+            title: node.title,
+            path,
+          };
+          if (listChanged) {
+            patch.list = targetList;
+            if (targetList === "today" && existing.list !== "today") {
+              patch.listed_on = today;
+            }
+          }
+          setItems(
+            (s) => s?.map((x) => (x.id === existing.id ? { ...x, ...patch } : x)) ?? s
+          );
+          if (!existing.id.startsWith("temp-")) {
+            db.updateListItem(existing.id, patch).catch(() => {});
+          }
         }
       }
     }
