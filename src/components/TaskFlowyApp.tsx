@@ -287,7 +287,10 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
     if (!rows || !items || !today) return;
     const byNodeId = new Map(items.map((x) => [x.node_id, x]));
     // eslint-disable-next-line no-console
-    console.log("[auto-sync] run", { rowsCount: rows.length, itemsCount: items.length, today });
+    console.log(
+      "[auto-sync] run " +
+        JSON.stringify({ rowsCount: rows.length, itemsCount: items.length, today })
+    );
 
     for (const node of rows) {
       if (node.status === "done" || !node.due_date) continue;
@@ -295,14 +298,20 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
       const targetList: ListName = node.due_date <= today ? "today" : "later";
       const existing = byNodeId.get(node.id);
       // eslint-disable-next-line no-console
-      console.log("[auto-sync] candidate", {
-        title: node.title,
-        due_date: node.due_date,
-        targetList,
-        hasExisting: !!existing,
-        existingList: existing?.list,
-        existingAuto: existing?.auto,
-      });
+      console.log(
+        "[auto-sync] candidate " +
+          JSON.stringify({
+            title: node.title,
+            due_date: node.due_date,
+            status: node.status,
+            dismissed_on: node.dismissed_on,
+            targetList,
+            hasExisting: !!existing,
+            existingId: existing?.id,
+            existingList: existing?.list,
+            existingAuto: existing?.auto,
+          })
+      );
 
       if (!existing) {
         const temp: ListItem = {
@@ -332,12 +341,22 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
         })
           .then((row) => {
             // eslint-disable-next-line no-console
-            console.log("[auto-sync] createListItem success", row);
+            console.log("[auto-sync] createListItem success " + JSON.stringify(row));
             setItems((s) => s?.map((x) => (x.id === temp.id ? row : x)) ?? s);
           })
           .catch((err) => {
             // eslint-disable-next-line no-console
-            console.log("[auto-sync] createListItem FAILED", err);
+            console.log(
+              "[auto-sync] createListItem FAILED " +
+                (err && typeof err === "object"
+                  ? JSON.stringify({
+                      message: (err as { message?: string }).message,
+                      details: (err as { details?: string }).details,
+                      hint: (err as { hint?: string }).hint,
+                      code: (err as { code?: string }).code,
+                    })
+                  : String(err))
+            );
             setItems((s) => s?.filter((x) => x.id !== temp.id) ?? s);
           });
         continue;
