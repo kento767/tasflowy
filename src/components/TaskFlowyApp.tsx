@@ -286,12 +286,23 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
   useEffect(() => {
     if (!rows || !items || !today) return;
     const byNodeId = new Map(items.map((x) => [x.node_id, x]));
+    // eslint-disable-next-line no-console
+    console.log("[auto-sync] run", { rowsCount: rows.length, itemsCount: items.length, today });
 
     for (const node of rows) {
       if (node.status === "done" || !node.due_date) continue;
       if (node.dismissed_on === today) continue;
       const targetList: ListName = node.due_date <= today ? "today" : "later";
       const existing = byNodeId.get(node.id);
+      // eslint-disable-next-line no-console
+      console.log("[auto-sync] candidate", {
+        title: node.title,
+        due_date: node.due_date,
+        targetList,
+        hasExisting: !!existing,
+        existingList: existing?.list,
+        existingAuto: existing?.auto,
+      });
 
       if (!existing) {
         const temp: ListItem = {
@@ -319,10 +330,16 @@ export function TaskFlowyApp({ db }: { db: DataSource }) {
           listed_on: today,
           auto: true,
         })
-          .then((row) =>
-            setItems((s) => s?.map((x) => (x.id === temp.id ? row : x)) ?? s)
-          )
-          .catch(() => setItems((s) => s?.filter((x) => x.id !== temp.id) ?? s));
+          .then((row) => {
+            // eslint-disable-next-line no-console
+            console.log("[auto-sync] createListItem success", row);
+            setItems((s) => s?.map((x) => (x.id === temp.id ? row : x)) ?? s);
+          })
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.log("[auto-sync] createListItem FAILED", err);
+            setItems((s) => s?.filter((x) => x.id !== temp.id) ?? s);
+          });
         continue;
       }
 
